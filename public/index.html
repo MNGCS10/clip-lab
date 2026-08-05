@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Touris Us · Clip Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E2A38; --paper:#F4EFE4; --card:#FBF8F1;
+    --orange:#E85D22; --teal:#1C7C8C; --line:#0e2a3822;
+    --muted:#5c6b72; --stamp:#c0392b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"IBM Plex Sans Thai",system-ui,sans-serif;
+    background:var(--paper); color:var(--ink);
+    background-image:radial-gradient(var(--line) 1px,transparent 1px);
+    background-size:22px 22px;
+    line-height:1.55; padding:28px 16px 80px;
+  }
+  .wrap{max-width:720px;margin:0 auto}
+
+  /* header */
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--teal);font-weight:500}
+  h1{font-size:clamp(28px,6vw,40px);font-weight:700;margin:.15em 0 .1em;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0 0 26px;font-size:15px}
+
+  /* ticket */
+  .ticket{background:var(--card);border:1.5px solid var(--ink);border-radius:14px;
+    overflow:hidden;box-shadow:6px 6px 0 var(--ink)}
+  .ticket-head{background:var(--ink);color:var(--paper);padding:12px 20px;
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em}
+  .ticket-head .dot{width:9px;height:9px;border-radius:50%;background:var(--orange);display:inline-block;margin-right:8px}
+  .ticket-body{padding:22px 20px}
+
+  .label{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 9px;font-weight:500}
+
+  /* template segmented */
+  .templates{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:22px}
+  .templates button{font-family:inherit;cursor:pointer;text-align:left;
+    background:#fff;border:1.5px solid var(--line);border-radius:9px;padding:11px 12px;
+    transition:.12s;color:var(--ink)}
+  .templates button b{display:block;font-size:14px;font-weight:600}
+  .templates button span{font-size:11.5px;color:var(--muted);line-height:1.35;display:block;margin-top:2px}
+  .templates button:hover{border-color:var(--teal)}
+  .templates button[aria-pressed="true"]{border-color:var(--orange);
+    box-shadow:inset 0 0 0 1px var(--orange);background:#fff6f1}
+
+  /* tabs */
+  .tabs{display:flex;gap:0;margin-bottom:14px;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;width:fit-content}
+  .tabs button{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.08em;
+    border:0;background:#fff;padding:8px 16px;cursor:pointer;color:var(--muted)}
+  .tabs button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+  /* drop zone */
+  .drop{border:2px dashed var(--teal);border-radius:11px;padding:30px 18px;text-align:center;
+    cursor:pointer;transition:.12s;background:#fff}
+  .drop:hover,.drop.over{background:#f0f7f8;border-color:var(--orange)}
+  .drop .big{font-size:15px;font-weight:600}
+  .drop .small{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .drop.has{border-style:solid;border-color:var(--ink);background:#fff}
+  input[type=file]{display:none}
+
+  input[type=url]{width:100%;font-family:"IBM Plex Mono",monospace;font-size:13px;
+    padding:13px 14px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
+  input[type=url]:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .hidden{display:none}
+
+  /* perforation + go */
+  .perf{border-top:2px dashed var(--line);margin:22px -20px 0;position:relative}
+  .perf::before,.perf::after{content:"";position:absolute;top:-11px;width:20px;height:20px;
+    background:var(--paper);border-radius:50%}
+  .perf::before{left:-11px}.perf::after{right:-11px}
+
+  .go{width:100%;margin-top:20px;font-family:inherit;font-size:16px;font-weight:600;
+    background:var(--orange);color:#fff;border:0;border-radius:10px;padding:15px;cursor:pointer;
+    letter-spacing:.02em;transition:.12s;box-shadow:3px 3px 0 var(--ink)}
+  .go:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+  .go:disabled{background:#b9b2a4;cursor:not-allowed;box-shadow:3px 3px 0 var(--line);transform:none}
+
+  /* status */
+  .status{margin-top:18px;font-family:"IBM Plex Mono",monospace;font-size:13px;
+    display:flex;align-items:center;gap:10px;color:var(--teal)}
+  .spin{width:15px;height:15px;border:2.5px solid var(--teal);border-top-color:transparent;
+    border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .err{margin-top:18px;background:#fdecea;border:1.5px solid var(--stamp);border-radius:9px;
+    padding:12px 14px;color:var(--stamp);font-size:14px}
+
+  /* result */
+  .result{margin-top:26px}
+  .rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .stamp{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;
+    color:var(--stamp);border:2px solid var(--stamp);border-radius:6px;padding:4px 9px;
+    transform:rotate(-4deg);text-transform:uppercase}
+  .block{background:var(--card);border:1.5px solid var(--ink);border-radius:11px;
+    padding:16px 18px;margin-bottom:12px}
+  .block h3{margin:0 0 8px;font-size:12px;font-family:"IBM Plex Mono",monospace;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+  .block p{margin:0;font-size:15px}
+  .block ul{margin:0;padding-left:18px}
+  .block li{font-size:14.5px;margin:5px 0}
+  .chip{display:inline-block;background:#fff;border:1.5px solid var(--line);border-radius:20px;
+    padding:4px 11px;margin:3px 4px 0 0;font-size:13px;font-family:"IBM Plex Mono",monospace}
+  .tline{display:flex;gap:12px;font-size:14px;margin:6px 0}
+  .tline .t{font-family:"IBM Plex Mono",monospace;color:var(--orange);font-size:12.5px;min-width:48px;padding-top:1px}
+  .tline b{font-weight:600}
+  .actions{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+  .actions button{font-family:"IBM Plex Mono",monospace;font-size:12px;cursor:pointer;
+    background:#fff;border:1.5px solid var(--ink);border-radius:8px;padding:8px 14px;color:var(--ink)}
+  .actions button:hover{background:var(--ink);color:var(--paper)}
+  pre{background:var(--ink);color:#e9f3f0;border-radius:10px;padding:16px;overflow:auto;
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.5;margin:12px 0 0}
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:36px;
+    font-family:"IBM Plex Mono",monospace;letter-spacing:.08em}
+  @media(max-width:560px){.templates{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Touris Us · Media Ops</div>
+  <h1>ถอดข้อมูลจากคลิป</h1>
+  <p class="sub">อัปคลิปหรือวางลิงก์ YouTube → ได้สรุป สถานที่ ไอเดียคอนเทนต์ และจุดตัด Reel กลับมาเป็นข้อมูลพร้อมใช้</p>
+
+  <div class="ticket">
+    <div class="ticket-head"><span><span class="dot"></span>CLIP LAB</span><span id="ticketNo">TG-0000</span></div>
+    <div class="ticket-body">
+
+      <p class="label">เลือกงาน</p>
+      <div class="templates" id="tpl">
+        <button data-t="reels" aria-pressed="true"><b>Reels/โพสต์</b><span>คลิปทริป → hook + แคปชัน + จุดตัด</span></button>
+        <button data-t="teardown"><b>ถอดเทคนิค</b><span>โฆษณา/คู่แข่ง → เรียนวิธีเล่าเรื่อง</span></button>
+        <button data-t="longextract"><b>คลิปยาว</b><span>สัมมนา/บรีฟ → ถอดข้อมูล+transcript</span></button>
+      </div>
+
+      <p class="label">แหล่งคลิป</p>
+      <div class="tabs" id="tabs">
+        <button data-tab="file" aria-pressed="true">อัปโหลดไฟล์</button>
+        <button data-tab="url">YouTube URL</button>
+      </div>
+
+      <div id="paneFile">
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="video/*,audio/*" />
+          <div class="big" id="dropText">ลากคลิปมาวาง หรือแตะเพื่อเลือก</div>
+          <div class="small">วิดีโอ/เสียง · ไฟล์ใหญ่รองรับผ่าน Files API อัตโนมัติ</div>
+        </label>
+      </div>
+
+      <div id="paneUrl" class="hidden">
+        <input type="url" id="url" placeholder="https://www.youtube.com/watch?v=... (ต้อง public)" />
+      </div>
+
+      <div class="perf"></div>
+      <button class="go" id="go">เริ่มถอดข้อมูล</button>
+
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <div id="result" class="result"></div>
+  <div class="foot">Powered by Gemini · ทัวริสอัส</div>
+</div>
+
+<script>
+const S = { template:"reels", tab:"file", file:null };
+document.getElementById("ticketNo").textContent =
+  "TG-" + Math.floor(1000+Math.random()*9000);
+
+// template select
+document.querySelectorAll("#tpl button").forEach(b=>b.onclick=()=>{
+  S.template=b.dataset.t;
+  document.querySelectorAll("#tpl button").forEach(x=>x.setAttribute("aria-pressed", x===b));
+});
+// tabs
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
+  S.tab=b.dataset.tab;
+  document.querySelectorAll("#tabs button").forEach(x=>x.setAttribute("aria-pressed", x===b));
+  document.getElementById("paneFile").classList.toggle("hidden", S.tab!=="file");
+  document.getElementById("paneUrl").classList.toggle("hidden", S.tab!=="url");
+});
+// file
+const drop=document.getElementById("drop"), fileIn=document.getElementById("file"), dropText=document.getElementById("dropText");
+fileIn.onchange=()=>setFile(fileIn.files[0]);
+["dragover","dragenter"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",ev=>setFile(ev.dataTransfer.files[0]));
+function setFile(f){ if(!f)return; S.file=f; drop.classList.add("has");
+  dropText.textContent="📎 "+f.name+"  ("+(f.size/1048576).toFixed(1)+"MB)"; }
+
+// submit
+const go=document.getElementById("go"), statusEl=document.getElementById("status"), resultEl=document.getElementById("result");
+go.onclick=async()=>{
+  resultEl.innerHTML="";
+  const fd=new FormData(); fd.append("template",S.template);
+  if(S.tab==="url"){ const u=document.getElementById("url").value.trim();
+    if(!u){return showErr("ใส่ YouTube URL ก่อน");} fd.append("youtubeUrl",u); }
+  else { if(!S.file){return showErr("เลือกไฟล์คลิปก่อน");} fd.append("file",S.file); }
+
+  go.disabled=true;
+  statusEl.innerHTML='<div class="status"><span class="spin"></span>กำลังส่งเข้า Gemini… คลิปยาวอาจใช้ 1-3 นาที</div>';
+  try{
+    const r=await fetch("/api/extract",{method:"POST",body:fd});
+    const j=await r.json();
+    if(!r.ok||j.error) throw new Error(j.error||"เกิดข้อผิดพลาด");
+    statusEl.innerHTML="";
+    render(j);
+  }catch(e){ statusEl.innerHTML=""; showErr(e.message); }
+  finally{ go.disabled=false; }
+};
+function showErr(m){ statusEl.innerHTML='<div class="err">❌ '+m+'</div>'; }
+
+// render result
+function render(j){
+  const d=j.data||{};
+  let h='<div class="rhead"><span class="stamp">Extracted · '+j.seconds+'s</span>'
+       +'<div class="actions"><button id="copy">คัดลอก JSON</button>'
+       +'<button id="toggleRaw">ดู JSON ดิบ</button></div></div>';
+
+  if(d.summary) h+=block("สรุป","<p>"+esc(d.summary)+"</p>");
+  if(d.hook) h+=block("Hook","<p>"+esc(d.hook)+"</p>");
+  if(d.storytelling_technique) h+=block("เทคนิคเล่าเรื่อง","<p>"+esc(d.storytelling_technique)+"</p>");
+  if(d.emotional_arc) h+=block("Emotional arc","<p>"+esc(d.emotional_arc)+"</p>");
+  if(d.key_message) h+=block("สารหลัก","<p>"+esc(d.key_message)+"</p>");
+  if(d.why_it_works) h+=block("ทำไมถึงโดน","<p>"+esc(d.why_it_works)+"</p>");
+  if(arr(d.locations_shown)) h+=block("สถานที่ที่เห็น",chips(d.locations_shown));
+  if(arr(d.hook_ideas)) h+=block("Hook ideas",list(d.hook_ideas));
+  if(arr(d.caption_options)) h+=block("แคปชัน",list(d.caption_options));
+  if(arr(d.apply_to_tourisus)) h+=block("ใช้กับทัวริสอัส",list(d.apply_to_tourisus));
+  if(arr(d.key_facts)) h+=block("ข้อมูลสำคัญ",list(d.key_facts));
+  if(arr(d.best_moments)) h+=block("ช่วงเด่น",d.best_moments.map(m=>tline(m.time,m.why)).join(""));
+  if(arr(d.suggested_cuts)) h+=block("จุดตัด Reel",list(d.suggested_cuts));
+  if(arr(d.topics)) h+=block("หัวข้อ",d.topics.map(m=>tline(m.time,"<b>"+esc(m.topic||"")+"</b> — "+esc(m.detail||""))).join(""));
+  if(arr(d.faq_extracted)) h+=block("FAQ",d.faq_extracted.map(f=>tline("Q",  "<b>"+esc(f.q||"")+"</b><br>"+esc(f.a||""))).join(""));
+  if(arr(d.full_transcript)) h+=block("Transcript",d.full_transcript.map(t=>tline(t.time,"<b>"+esc(t.speaker||"")+":</b> "+esc(t.text||""))).join(""));
+  if(arr(d.transcript)) h+=block("Transcript",d.transcript.map(t=>tline(t.time,"<b>"+esc(t.speaker||"")+":</b> "+esc(t.text||""))).join(""));
+  if(arr(d.hashtags)) h+=block("Hashtags",chips(d.hashtags));
+
+  h+='<pre id="raw" class="hidden">'+esc(JSON.stringify(d,null,2))+'</pre>';
+  resultEl.innerHTML=h;
+
+  document.getElementById("copy").onclick=async(e)=>{
+    await navigator.clipboard.writeText(JSON.stringify(d,null,2));
+    e.target.textContent="คัดลอกแล้ว ✓"; setTimeout(()=>e.target.textContent="คัดลอก JSON",1500);
+  };
+  document.getElementById("toggleRaw").onclick=(e)=>{
+    const raw=document.getElementById("raw"); const hid=raw.classList.toggle("hidden");
+    e.target.textContent=hid?"ดู JSON ดิบ":"ซ่อน JSON ดิบ";
+  };
+}
+const arr=(x)=>Array.isArray(x)&&x.length;
+const esc=(s)=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const block=(t,inner)=>'<div class="block"><h3>'+t+'</h3>'+inner+'</div>';
+const list=(a)=>'<ul>'+a.map(i=>'<li>'+esc(i)+'</li>').join("")+'</ul>';
+const chips=(a)=>a.map(i=>'<span class="chip">'+esc(i)+'</span>').join("");
+const tline=(t,txt)=>'<div class="tline"><span class="t">'+esc(t)+'</span><span>'+txt+'</span></div>';
+</script>
+</body>
+</html>

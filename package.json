@@ -1,0 +1,14 @@
+{
+  "name": "clip-extractor-web",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "เว็บถอดข้อมูลจากคลิป (Touris Us) — Hono + Gemini",
+  "scripts": {
+    "start": "bun run server.ts",
+    "dev": "bun --watch server.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^2.15.0",
+    "hono": "^4.6.0"
+  }
+}
