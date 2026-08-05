@@ -133,8 +133,9 @@ async function notifyTelegram(data: any, template: string, source: string, secon
 }
 
 async function logToNotion(data: any, template: string, source: string, seconds: string) {
-  if (!NOTION_TOKEN) return;
+  if (!NOTION_TOKEN) { console.log("notion: NOTION_TOKEN ไม่ได้ตั้ง — ข้าม"); return; }
   try {
+    console.log("notion: กำลัง log เข้า", NOTION_PAGE_ID);
     const now = new Date().toISOString().replace("T", " ").slice(0, 16);
     const codeRich = chunk(JSON.stringify(data, null, 2)).map((t) => ({ type: "text", text: { content: t } }));
     const children: any[] = [
@@ -144,12 +145,18 @@ async function logToNotion(data: any, template: string, source: string, seconds:
     if (data.summary) children.push({ object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: String(data.summary).slice(0, 1900) } }] } });
     children.push({ object: "block", type: "code", code: { language: "json", rich_text: codeRich } });
 
-    await fetch(`https://api.notion.com/v1/blocks/${NOTION_PAGE_ID}/children`, {
+    const res = await fetch(`https://api.notion.com/v1/blocks/${NOTION_PAGE_ID}/children`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${NOTION_TOKEN}`, "Content-Type": "application/json", "Notion-Version": NOTION_VERSION },
       body: JSON.stringify({ children }),
     });
-  } catch (e) { console.error("notion log error:", e); }
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`notion log FAILED: HTTP ${res.status} — ${body.slice(0, 600)}`);
+    } else {
+      console.log("notion: log สำเร็จ ✅");
+    }
+  } catch (e) { console.error("notion log error (network):", e); }
 }
 
 // ---------- app ----------
