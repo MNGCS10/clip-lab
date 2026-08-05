@@ -1,0 +1,23 @@
+name: keep-alive
+
+# ping /health กัน Render free tier หลับ (spin down หลัง 15 นาที inactive)
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # ทุก 10 นาที
+  workflow_dispatch:          # กดรันเองได้จากหน้า Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          echo "Pinging clip-lab health..."
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 \
+            https://clip-lab-bngj.onrender.com/health)
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "⚠️ Unexpected status: $code"
+            exit 1
+          fi
+          echo "✅ awake"
