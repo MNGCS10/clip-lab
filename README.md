@@ -48,6 +48,20 @@ CMD ["bun","run","server.ts"]
 | **ถอดเทคนิค** | โฆษณา/คลิปคู่แข่ง | เทคนิคเล่าเรื่อง + เอามาใช้กับทัวริสอัส |
 | **คลิปยาว** | สัมมนา/บรีฟทริป/รีวิวยาว | หัวข้อ + ข้อมูลสำคัญ + FAQ + transcript |
 
+## แจ้งเตือน (ไม่บังคับ)
+
+ถอดเสร็จ ping Telegram + log เข้า Notion อัตโนมัติ — ตั้ง env แล้วทำงานเอง (ไม่ตั้ง = ปิดเงียบ):
+
+**Telegram:**
+- `TELEGRAM_BOT_TOKEN` — จาก @BotFather (หรือ bot เดิมของ HIVE)
+- `TELEGRAM_CHAT_ID` — id กลุ่ม (เพิ่ม bot เข้ากลุ่ม แล้วดู id จาก getUpdates หรือ @userinfobot)
+
+**Notion:**
+- `NOTION_TOKEN` — จาก notion.so/my-integrations (สร้าง integration แล้ว **share หน้า Master Plan ให้ integration ด้วย**)
+- `NOTION_PAGE_ID` — default = Master Plan อยู่แล้ว (ไม่ต้องตั้งก็ได้)
+
+ทั้งคู่ยิงแบบ fire-and-forget — ถ้าล้มเหลวก็ไม่กระทบผลถอดคลิป
+
 ## หมายเหตุ
 
 - ไฟล์ **<20MB** ส่ง inline / **>=20MB** อัปผ่าน Files API + poll อัตโนมัติ (คลิปยาวเป็นชั่วโมงก็ได้)

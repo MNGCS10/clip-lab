@@ -100,6 +100,58 @@ async function buildMediaPart(file: File | undefined, youtubeUrl: string | undef
   }
 }
 
+// ---------- notify (optional — ปิดเงียบถ้าไม่ตั้ง env) ----------
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TG_CHAT = process.env.TELEGRAM_CHAT_ID;
+const NOTION_TOKEN = process.env.NOTION_TOKEN;
+const NOTION_PAGE_ID = process.env.NOTION_PAGE_ID || "39275f48-0e52-81f9-bf01-e1b20ce22619";
+const NOTION_VERSION = process.env.NOTION_VERSION || "2022-06-28";
+
+const TPL_LABEL: Record<string, string> = { reels: "Reels/โพสต์", teardown: "ถอดเทคนิค", longextract: "คลิปยาว" };
+const htmlEsc = (s: any) => String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
+const chunk = (s: string, n = 1900) => { const o: string[] = []; for (let i = 0; i < s.length; i += n) o.push(s.slice(i, i + n)); return o; };
+
+async function notifyTelegram(data: any, template: string, source: string, seconds: string) {
+  if (!TG_TOKEN || !TG_CHAT) return;
+  try {
+    const locs = Array.isArray(data.locations_shown) ? data.locations_shown.slice(0, 5).join(", ") : "";
+    const hook = Array.isArray(data.hook_ideas) && data.hook_ideas[0] ? String(data.hook_ideas[0]) : "";
+    const lines = [
+      `🎬 <b>Clip Lab</b> — ถอดเสร็จ (${TPL_LABEL[template] || template})`,
+      source ? `📎 ${htmlEsc(source)}` : "",
+      data.summary ? `\n📝 ${htmlEsc(String(data.summary).slice(0, 400))}` : "",
+      locs ? `\n📍 ${htmlEsc(locs)}` : "",
+      hook ? `\n💡 ${htmlEsc(hook.slice(0, 200))}` : "",
+      `\n⏱ ${seconds}s`,
+    ].filter(Boolean);
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: TG_CHAT, text: lines.join("\n"), parse_mode: "HTML", disable_web_page_preview: true }),
+    });
+  } catch (e) { console.error("telegram notify error:", e); }
+}
+
+async function logToNotion(data: any, template: string, source: string, seconds: string) {
+  if (!NOTION_TOKEN) return;
+  try {
+    const now = new Date().toISOString().replace("T", " ").slice(0, 16);
+    const codeRich = chunk(JSON.stringify(data, null, 2)).map((t) => ({ type: "text", text: { content: t } }));
+    const children: any[] = [
+      { object: "block", type: "heading_3", heading_3: { rich_text: [{ type: "text", text: { content: `🎬 Clip Lab — ${TPL_LABEL[template] || template} · ${now} · ${seconds}s` } }] } },
+    ];
+    if (source) children.push({ object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: `📎 ${source}` } }] } });
+    if (data.summary) children.push({ object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: String(data.summary).slice(0, 1900) } }] } });
+    children.push({ object: "block", type: "code", code: { language: "json", rich_text: codeRich } });
+
+    await fetch(`https://api.notion.com/v1/blocks/${NOTION_PAGE_ID}/children`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${NOTION_TOKEN}`, "Content-Type": "application/json", "Notion-Version": NOTION_VERSION },
+      body: JSON.stringify({ children }),
+    });
+  } catch (e) { console.error("notion log error:", e); }
+}
+
 // ---------- app ----------
 const app = new Hono();
 app.use("/*", cors());
@@ -131,7 +183,14 @@ app.post("/api/extract", async (c) => {
     });
 
     const data = safeParse(resp.text ?? "");
-    return c.json({ ok: true, template, seconds: ((Date.now() - t0) / 1000).toFixed(1), data });
+    const seconds = ((Date.now() - t0) / 1000).toFixed(1);
+    const source = youtubeUrl ? youtubeUrl : file ? file.name : "";
+
+    // ยิงแจ้งเตือนแบบ fire-and-forget (ไม่บล็อกการตอบ user)
+    void notifyTelegram(data, template, source, seconds);
+    void logToNotion(data, template, source, seconds);
+
+    return c.json({ ok: true, template, seconds, data });
   } catch (e: any) {
     return c.json({ error: e?.message || String(e) }, 500);
   }

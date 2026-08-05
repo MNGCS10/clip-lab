@@ -9,4 +9,11 @@ services:
       - key: GEMINI_API_KEY
         sync: false        # ใส่ค่าจริงใน Render dashboard (masked)
       - key: GEMINI_MODEL
-        value: gemini-2.5-flash
+        value: gemini-3.6-flash
+      # แจ้งเตือน (ไม่บังคับ — ใส่ค่าจริงใน dashboard ถ้าต้องการ)
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: NOTION_TOKEN
+        sync: false
