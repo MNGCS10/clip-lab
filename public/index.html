@@ -236,7 +236,7 @@ function render(j){
   if(arr(d.apply_to_tourisus)) h+=block("ใช้กับทัวริสอัส",list(d.apply_to_tourisus));
   if(arr(d.key_facts)) h+=block("ข้อมูลสำคัญ",list(d.key_facts));
   if(arr(d.best_moments)) h+=block("ช่วงเด่น",d.best_moments.map(m=>tline(m.time,m.why)).join(""));
-  if(arr(d.suggested_cuts)) h+=block("จุดตัด Reel",list(d.suggested_cuts));
+  if(arr(d.suggested_cuts)) h+=block("จุดตัด Reel",list(d.suggested_cuts.map(fmtCut)));
   if(arr(d.topics)) h+=block("หัวข้อ",d.topics.map(m=>tline(m.time,"<b>"+esc(m.topic||"")+"</b> — "+esc(m.detail||""))).join(""));
   if(arr(d.faq_extracted)) h+=block("FAQ",d.faq_extracted.map(f=>tline("Q",  "<b>"+esc(f.q||"")+"</b><br>"+esc(f.a||""))).join(""));
   if(arr(d.full_transcript)) h+=block("Transcript",d.full_transcript.map(t=>tline(t.time,"<b>"+esc(t.speaker||"")+":</b> "+esc(t.text||""))).join(""));
@@ -256,6 +256,16 @@ function render(j){
   };
 }
 const arr=(x)=>Array.isArray(x)&&x.length;
+// รองรับ suggested_cuts ทั้งแบบ string และ object {start,end,label,...}
+function fmtCut(c){
+  if(typeof c==="string") return c;
+  if(c && typeof c==="object"){
+    const t=[c.start,c.end].filter(Boolean).join(" - ");
+    const d=c.label||c.why||c.desc||c.description||c.text||"";
+    return [t,d].filter(Boolean).join("  ") || JSON.stringify(c);
+  }
+  return String(c);
+}
 const esc=(s)=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const block=(t,inner)=>'<div class="block"><h3>'+t+'</h3>'+inner+'</div>';
 const list=(a)=>'<ul>'+a.map(i=>'<li>'+esc(i)+'</li>').join("")+'</ul>';
