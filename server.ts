@@ -60,6 +60,36 @@ ${ANTI_BRAND}`,
   "faq_extracted": [{"q": "คำถาม", "a": "คำตอบ"}],
   "full_transcript": [{"time": "MM:SS", "speaker": "ผู้พูด", "text": "คำพูด"}]
 }`,
+
+  // XRAY — ผ่าคลิปคู่แข่ง เห็นโครงสร้าง แล้วเอามาปรับใช้ (ไม่ก๊อป)
+  xray: `คุณคือนักวิเคราะห์คอนเทนต์วิดีโอสั้น ดูคลิปนี้ (ภาพ+เสียง) แล้วผ่าโครงสร้างให้ทีมทัวริสอัสเรียนรู้ ตอบเป็น JSON ภาษาไทยเท่านั้น
+กติกาสำคัญ:
+- ทุกข้อสรุปต้องอิงสิ่งที่เห็น/ได้ยินในคลิปจริง ใส่ไว้ใน "observed"
+- สิ่งที่เดา (เช่น ทำไมอัลกอริทึมดัน, ยอดวิว, เบื้องหลังการผลิต) ให้ใส่ใน "guessed" แยกต่างหาก ห้ามปนกัน
+- คุณมองไม่เห็นยอดวิว/ไลก์/คอมเมนต์ ห้ามอ้างตัวเลขเหล่านั้น
+{
+  "clip_info": {"duration": "MM:SS โดยประมาณ", "format": "talking head / b-roll / การ์ตูน / อื่นๆ", "language": "ภาษาในคลิป"},
+  "summary": "คลิปนี้เล่าอะไร 2-3 ประโยค",
+  "hook": "สิ่งที่เกิดขึ้นใน 0-3 วินาทีแรก (ประโยค/ภาพ/เสียง)",
+  "hook_type": "คำถาม | ตัวเลข | ขัดความคาดหวัง | ปัญหา | ภาพช็อต | อื่นๆ",
+  "hook_score": 1,
+  "hook_reason": "ทำไมให้คะแนนนี้ (1-5)",
+  "story_structure": [{"time": "MM:SS", "beat": "เปิด/ปม/จุดพีค/ปิด + เกิดอะไรขึ้น"}],
+  "editing_rhythm": "จังหวะตัดต่อ: จำนวนคัตต่อ 10 วินาที, ซับ, เสียง, เพลง",
+  "psychology_triggers": [{"trigger": "ความอยากรู้ | FOMO | ความเป็นตัวตน | ความขำ | ประโยชน์ทันที | อื่นๆ", "evidence": "เห็นตรงไหนในคลิป (timestamp)"}],
+  "open_loop": "มีการเปิดคำถามค้างไว้แล้วค่อยเฉลยไหม ตรงไหน",
+  "cta": "CTA คืออะไร พูด/โชว์ตอนไหน (ถ้าไม่มีให้ตอบว่าไม่มี)",
+  "funnel_path": "คนดูถูกพาไปต่อทางไหน (ลิงก์/แชท/ไลน์/เพจ) ถ้าเห็นในคลิป",
+  "observed": ["ข้อเท็จจริงที่เห็น/ได้ยินจริง พร้อม timestamp"],
+  "guessed": ["ข้อสันนิษฐาน (ระบุว่าเป็นการเดา)"],
+  "why_it_works": "สรุปว่าทำไมน่าจะโดน โดยอ้างเฉพาะข้อใน observed",
+  "hook_ideas": ["hook 3 แบบสำหรับคลิปทริปของทัวริสอัส ในโทนน้องทัวร์ + ยายอัส (เขียนใหม่ ไม่ลอกประโยคต้นฉบับ)"],
+  "apply_to_tourisus": ["เก็บโครงสร้างอะไรไปใช้ได้ 3-5 ข้อ"],
+  "do_not_copy": ["สิ่งที่ห้ามเอาตรงๆ: เสียง ภาพ สคริปต์ตัวละคร ชื่อแบรนด์ของคลิปต้นฉบับ"],
+  "test_plan": "ทดลอง 1 ไอเดีย → 1 คลิป → วัดผล 48 ชม. โดยดูตัวชี้วัดไหน"
+}
+บริบท: ${TOURISUS} ใช้คลิปนี้เพื่อเรียนรู้โครงสร้างเท่านั้น ไม่ใช่เพื่อทำซ้ำเนื้อหา
+${ANTI_BRAND}`,
 };
 
 // ---------- helpers ----------
@@ -107,7 +137,7 @@ const NOTION_TOKEN = process.env.NOTION_TOKEN;
 const NOTION_PAGE_ID = process.env.NOTION_PAGE_ID || "39275f48-0e52-81f9-bf01-e1b20ce22619";
 const NOTION_VERSION = process.env.NOTION_VERSION || "2022-06-28";
 
-const TPL_LABEL: Record<string, string> = { reels: "Reels/โพสต์", teardown: "ถอดเทคนิค", longextract: "คลิปยาว" };
+const TPL_LABEL: Record<string, string> = { reels: "Reels/โพสต์", teardown: "ถอดเทคนิค", longextract: "คลิปยาว", xray: "XRAY" };
 const htmlEsc = (s: any) => String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
 const chunk = (s: string, n = 1900) => { const o: string[] = []; for (let i = 0; i < s.length; i += n) o.push(s.slice(i, i + n)); return o; };
 
@@ -116,11 +146,14 @@ async function notifyTelegram(data: any, template: string, source: string, secon
   try {
     const locs = Array.isArray(data.locations_shown) ? data.locations_shown.slice(0, 5).join(", ") : "";
     const hook = Array.isArray(data.hook_ideas) && data.hook_ideas[0] ? String(data.hook_ideas[0]) : "";
+    const xrayHook = data.hook ? `${htmlEsc(String(data.hook).slice(0, 160))}${data.hook_score ? ` (hook ${htmlEsc(data.hook_score)}/5)` : ""}` : "";
     const lines = [
       `🎬 <b>Clip Lab</b> — ถอดเสร็จ (${TPL_LABEL[template] || template})`,
       source ? `📎 ${htmlEsc(source)}` : "",
       data.summary ? `\n📝 ${htmlEsc(String(data.summary).slice(0, 400))}` : "",
       locs ? `\n📍 ${htmlEsc(locs)}` : "",
+      template === "xray" && xrayHook ? `\n🎯 ${xrayHook}` : "",
+      template === "xray" && data.cta ? `\n📣 CTA: ${htmlEsc(String(data.cta).slice(0, 160))}` : "",
       hook ? `\n💡 ${htmlEsc(hook.slice(0, 200))}` : "",
       `\n⏱ ${seconds}s`,
     ].filter(Boolean);
