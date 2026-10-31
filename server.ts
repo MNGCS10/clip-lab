@@ -30,6 +30,8 @@ function friendlyError(e: any): string {
     return "key นี้ไม่มีสิทธิ์ใช้ Gemini API หรือถูกจำกัดการใช้งาน — เช็กที่ Google AI Studio";
   if (/prepayment credits|credits are depleted|"code":\s*402/i.test(raw))
     return "เครดิต Gemini ของ project นี้หมด (prepay = 0) — เติมเครดิต/ผูกบัญชีชำระเงินที่ ai.studio/projects หรือเปลี่ยนไปใช้ key ของ project ที่เป็น Free tier";
+  if (/Unsupported MIME type:\s*text\/html/i.test(raw))
+    return "Gemini ดูลิงก์ YouTube นี้ไม่ได้ — วิดีโอต้องเป็น Public (ไม่ใช่ Private/Unlisted/จำกัดอายุ/ไลฟ์สด) ลองลิงก์อื่น หรืออัปโหลดไฟล์แทน";
   if (/RESOURCE_EXHAUSTED|"code":\s*429/i.test(raw))
     return "โควต้า Gemini เต็มชั่วคราว — รอสักครู่แล้วลองใหม่";
   return raw;
@@ -114,6 +116,18 @@ ${ANTI_BRAND}`,
 function isYouTube(s: string) {
   return /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(s.trim());
 }
+// ตัดพารามิเตอร์ท้ายลิงก์ (t=, si=, list=, pp=) เหลือ https://www.youtube.com/watch?v=ID — Gemini รับเฉพาะลิงก์ตรง
+function normalizeYouTube(u: string): string {
+  try {
+    const url = new URL(u.trim());
+    if (/youtu\.be$/i.test(url.hostname)) { const id = url.pathname.slice(1); return id ? `https://www.youtube.com/watch?v=${id}` : u.trim(); }
+    const id = url.searchParams.get("v");
+    if (id) return `https://www.youtube.com/watch?v=${id}`;
+    const m = url.pathname.match(/^\/(?:shorts|live|embed)\/([\w-]{6,})/);
+    if (m) return `https://www.youtube.com/watch?v=${m[1]}`;
+  } catch {}
+  return u.trim();
+}
 function safeParse(text: string): any {
   const c = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
   try { return JSON.parse(c); }
@@ -122,7 +136,7 @@ function safeParse(text: string): any {
 
 async function buildMediaPart(file: File | undefined, youtubeUrl: string | undefined): Promise<any> {
   if (youtubeUrl && isYouTube(youtubeUrl)) {
-    return { fileData: { fileUri: youtubeUrl.trim() } };
+    return { fileData: { fileUri: normalizeYouTube(youtubeUrl) } };
   }
   if (!file) throw new Error("ต้องแนบไฟล์คลิป หรือใส่ YouTube URL (public)");
 
