@@ -28,6 +28,8 @@ function friendlyError(e: any): string {
     return "GEMINI_API_KEY ไม่ถูกต้องหรือหมดอายุ — ตรวจที่ Render → clip-lab → Environment (ถ้า key ขึ้นต้น AQ. ซึ่งเป็นชนิดใหม่ของ AI Studio ให้ลอง key ขึ้นต้น AIza จาก Google Cloud Console → Credentials แทน)";
   if (/PERMISSION_DENIED|"code":\s*403/i.test(raw))
     return "key นี้ไม่มีสิทธิ์ใช้ Gemini API หรือถูกจำกัดการใช้งาน — เช็กที่ Google AI Studio";
+  if (/prepayment credits|credits are depleted|"code":\s*402/i.test(raw))
+    return "เครดิต Gemini ของ project นี้หมด (prepay = 0) — เติมเครดิต/ผูกบัญชีชำระเงินที่ ai.studio/projects หรือเปลี่ยนไปใช้ key ของ project ที่เป็น Free tier";
   if (/RESOURCE_EXHAUSTED|"code":\s*429/i.test(raw))
     return "โควต้า Gemini เต็มชั่วคราว — รอสักครู่แล้วลองใหม่";
   return raw;
