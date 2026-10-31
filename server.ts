@@ -130,8 +130,9 @@ function normalizeYouTube(u: string): string {
 }
 function safeParse(text: string): any {
   const c = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
-  try { return JSON.parse(c); }
-  catch { const m = c.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw new Error("parse JSON ไม่ได้"); }
+  const unwrap = (v: any) => (Array.isArray(v) && v.length === 1 && v[0] && typeof v[0] === "object" ? v[0] : v); // Gemini บางทีห่อผลเป็น [ {...} ]
+  try { return unwrap(JSON.parse(c)); }
+  catch { const m = c.match(/\{[\s\S]*\}/); if (m) return unwrap(JSON.parse(m[0])); throw new Error("parse JSON ไม่ได้"); }
 }
 
 async function buildMediaPart(file: File | undefined, youtubeUrl: string | undefined): Promise<any> {
