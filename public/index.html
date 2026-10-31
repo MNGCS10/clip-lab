@@ -138,6 +138,7 @@
         <button data-t="reels" aria-pressed="true"><b>Reels/โพสต์</b><span>คลิปทริป → hook + แคปชัน + จุดตัด</span></button>
         <button data-t="teardown"><b>ถอดเทคนิค</b><span>โฆษณา/คู่แข่ง → เรียนวิธีเล่าเรื่อง</span></button>
         <button data-t="longextract"><b>คลิปยาว</b><span>สัมมนา/บรีฟ → ถอดข้อมูล+transcript</span></button>
+        <button data-t="xray"><b>XRAY</b><span>ผ่าคลิปคู่แข่ง → hook/จิตวิทยา/CTA + เอามาปรับใช้</span></button>
       </div>
 
       <p class="label">แหล่งคลิป</p>
@@ -225,7 +226,17 @@ function render(j){
        +'<button id="toggleRaw">ดู JSON ดิบ</button></div></div>';
 
   if(d.summary) h+=block("สรุป","<p>"+esc(d.summary)+"</p>");
-  if(d.hook) h+=block("Hook","<p>"+esc(d.hook)+"</p>");
+  if(d.clip_info) h+=block("ข้อมูลคลิป",chips(Object.values(d.clip_info).filter(Boolean)));
+  if(d.hook) h+=block("Hook"+(d.hook_score?" · "+esc(d.hook_score)+"/5":"")+(d.hook_type?" · "+esc(d.hook_type):""),"<p>"+esc(d.hook)+"</p>"+(d.hook_reason?"<p>"+esc(d.hook_reason)+"</p>":""));
+  if(arr(d.story_structure)) h+=block("โครงเรื่อง",d.story_structure.map(m=>tline(m.time,esc(m.beat||""))).join(""));
+  if(d.editing_rhythm) h+=block("จังหวะตัดต่อ","<p>"+esc(d.editing_rhythm)+"</p>");
+  if(arr(d.psychology_triggers)) h+=block("จิตวิทยา",d.psychology_triggers.map(p=>tline("●","<b>"+esc(p.trigger||"")+"</b> — "+esc(p.evidence||""))).join(""));
+  if(d.open_loop) h+=block("Open loop","<p>"+esc(d.open_loop)+"</p>");
+  if(d.cta) h+=block("CTA","<p>"+esc(d.cta)+"</p>"+(d.funnel_path?"<p>→ "+esc(d.funnel_path)+"</p>":""));
+  if(arr(d.observed)) h+=block("✅ เห็นในคลิป",list(d.observed));
+  if(arr(d.guessed)) h+=block("❓ คาดเดา",list(d.guessed));
+  if(arr(d.do_not_copy)) h+=block("❌ ห้ามก๊อป",list(d.do_not_copy));
+  if(d.test_plan) h+=block("แผนทดสอบ","<p>"+esc(d.test_plan)+"</p>");
   if(d.storytelling_technique) h+=block("เทคนิคเล่าเรื่อง","<p>"+esc(d.storytelling_technique)+"</p>");
   if(d.emotional_arc) h+=block("Emotional arc","<p>"+esc(d.emotional_arc)+"</p>");
   if(d.key_message) h+=block("สารหลัก","<p>"+esc(d.key_message)+"</p>");
