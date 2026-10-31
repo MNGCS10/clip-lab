@@ -18,13 +18,14 @@ const API_KEY = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g
 const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const KEY_FORMAT_OK = !!API_KEY && /^AIza[\w-]{30,}$/.test(API_KEY);
 if (!API_KEY) console.error("⚠️  ไม่พบ GEMINI_API_KEY — ตั้งใน env ก่อน");
-else if (!KEY_FORMAT_OK) console.error("⚠️  GEMINI_API_KEY รูปแบบไม่ปกติ (ควรขึ้นต้น AIza) — ตรวจที่ Render → Environment");
+else if (API_KEY.startsWith("AQ.")) console.error("⚠️  GEMINI_API_KEY ขึ้นต้น AQ. — key ชนิดใหม่ของ AI Studio ตอนนี้หลายคนโดน 401 ACCESS_TOKEN_TYPE_UNSUPPORTED แนะนำใช้ key ขึ้นต้น AIza (สร้างจาก Google Cloud Console → Credentials)");
+else if (!KEY_FORMAT_OK) console.error("⚠️  GEMINI_API_KEY รูปแบบไม่ปกติ — ตรวจที่ Render → Environment");
 
 // แปลง error ของ Gemini เป็นข้อความไทยอ่านง่าย (ข้อความดิบเก็บไว้ใน log)
 function friendlyError(e: any): string {
   const raw = String(e?.message || e);
   if (/API key not valid|ACCESS_TOKEN_TYPE_UNSUPPORTED|UNAUTHENTICATED|"code":\s*401/i.test(raw))
-    return "GEMINI_API_KEY ไม่ถูกต้องหรือหมดอายุ — ตรวจที่ Render → clip-lab → Environment (key ต้องขึ้นต้น AIza, ไม่มีเว้นวรรค/เครื่องหมายคำพูด)";
+    return "GEMINI_API_KEY ไม่ถูกต้องหรือหมดอายุ — ตรวจที่ Render → clip-lab → Environment (ถ้า key ขึ้นต้น AQ. ซึ่งเป็นชนิดใหม่ของ AI Studio ให้ลอง key ขึ้นต้น AIza จาก Google Cloud Console → Credentials แทน)";
   if (/PERMISSION_DENIED|"code":\s*403/i.test(raw))
     return "key นี้ไม่มีสิทธิ์ใช้ Gemini API หรือถูกจำกัดการใช้งาน — เช็กที่ Google AI Studio";
   if (/RESOURCE_EXHAUSTED|"code":\s*429/i.test(raw))
