@@ -33,7 +33,21 @@ function friendlyError(e: any): string {
   return raw;
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+// ทางสำรอง: Vertex AI ด้วย service account (ตั้ง GOOGLE_SERVICE_ACCOUNT_JSON = JSON ดิบ หรือ base64 ของ JSON)
+function loadServiceAccount(): any | undefined {
+  const raw = (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || "").trim();
+  if (!raw) return undefined;
+  try { return JSON.parse(raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf-8")); }
+  catch { console.error("⚠️  GOOGLE_SERVICE_ACCOUNT_JSON อ่านไม่ได้ (ต้องเป็น JSON หรือ base64 ของ JSON)"); return undefined; }
+}
+const SA = loadServiceAccount();
+const USE_VERTEX = !!SA;
+const VERTEX_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
+if (USE_VERTEX) console.error(`ℹ️  ใช้ Vertex AI (project ${SA.project_id}, ${VERTEX_LOCATION}) — ข้าม GEMINI_API_KEY`);
+
+const ai = USE_VERTEX
+  ? new GoogleGenAI({ vertexai: true, project: SA.project_id, location: VERTEX_LOCATION, googleAuthOptions: { credentials: SA } })
+  : new GoogleGenAI({ apiKey: API_KEY });
 const INLINE_LIMIT = 20 * 1024 * 1024;
 
 // ---------- prompt templates (กฎกันแบรนด์อื่นฝังไว้แล้ว) ----------
@@ -130,6 +144,7 @@ async function buildMediaPart(file: File | undefined, youtubeUrl: string | undef
   if (buf.length < INLINE_LIMIT) {
     return { inlineData: { mimeType, data: buf.toString("base64") } };
   }
+  if (USE_VERTEX) throw new Error("โหมด Vertex ยังไม่รองรับไฟล์เกิน 20MB — ใช้ YouTube URL หรือตัดคลิปให้เล็กลง");
   // ไฟล์ใหญ่ → Files API + poll
   const tmp = path.join(os.tmpdir(), `clip-${Date.now()}-${file.name.replace(/[^\w.]/g, "_")}`);
   fs.writeFileSync(tmp, buf);
@@ -217,12 +232,12 @@ app.get("/", (c) => {
   return c.html(html);
 });
 
-app.get("/health", (c) => c.json({ ok: true, model: MODEL, keySet: !!API_KEY, keyFormatOk: KEY_FORMAT_OK }));
+app.get("/health", (c) => c.json({ ok: true, model: MODEL, keySet: !!API_KEY, keyFormatOk: KEY_FORMAT_OK, mode: USE_VERTEX ? "vertex" : "apikey" }));
 
 app.post("/api/extract", async (c) => {
   const t0 = Date.now();
   try {
-    if (!API_KEY) return c.json({ error: "server ยังไม่ตั้ง GEMINI_API_KEY — ตั้งที่ Render → Environment" }, 500);
+    if (!API_KEY && !USE_VERTEX) return c.json({ error: "server ยังไม่ตั้ง GEMINI_API_KEY — ตั้งที่ Render → Environment" }, 500);
 
     const body = await c.req.parseBody();
     const template = ((body.template as string) || "reels").trim();
